@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace IliaKologrivov\LaravelJsonRpcServer\Console;
 
 use Illuminate\Console\Command;
-use IliaKologrivov\LaravelJsonRpcServer\Contract\ServerInterface as JsonRpcServerContract;
+use IliaKologrivov\LaravelJsonRpcServer\Contract\ServerInterface;
 
 class RouteListCommand extends Command
 {
@@ -36,10 +36,10 @@ class RouteListCommand extends Command
     /**
      * Execute the console command.
      *
-     * @param  JsonRpcServerContract  $server
+     * @param  ServerInterface  $server
      * @return mixed
      */
-    public function handle(JsonRpcServerContract $server)
+    public function handle(ServerInterface $server)
     {
         $headers = [
             'Endpoint',
@@ -49,8 +49,6 @@ class RouteListCommand extends Command
         $data = [];
 
         foreach($server->router()->getRoutes() as $endpoint => $routes) {
-            $endpoint = '/' . trim($endpoint, '/');
-
             foreach($routes as $method => $controller) {
                 $data[] = [
                     'endpoint' => $endpoint,

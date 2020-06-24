@@ -27,13 +27,17 @@ class Request implements RequestContract, ExecutableInterface
      */
     private $id = null;
 
+    private $endpoint = '';
+
     /**
+     * @param string $endpoint
      * @param string $method
      * @param RequestParams|null $params
      * @param string|int|null $id
      */
-    public function __construct(string $method, RequestParams $params = null, $id = null)
+    public function __construct(string $endpoint, string $method, RequestParams $params = null, $id = null)
     {
+        $this->endpoint = (string)$endpoint;
         $this->method = (string)$method;
         $this->params = $params ?: RequestParams::constructEmpty();
 
@@ -44,6 +48,11 @@ class Request implements RequestContract, ExecutableInterface
         }
 
         $this->id = $id;
+    }
+
+    public function getEndpoint(): string
+    {
+        return $this->endpoint;
     }
 
     /**
@@ -78,10 +87,6 @@ class Request implements RequestContract, ExecutableInterface
         return $this->id;
     }
 
-    /**
-     * @param RequestExecutorInterface $executor
-     * @return Jsonable
-     */
     public function executeWith(RequestExecutorInterface $executor)
     {
         return $executor->execute($this);

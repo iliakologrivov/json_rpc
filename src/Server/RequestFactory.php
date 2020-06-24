@@ -11,7 +11,7 @@ use IliaKologrivov\LaravelJsonRpcServer\Contract\ExecutableInterface;
 
 class RequestFactory implements RequestFactoryContract
 {
-    public function createFromPayload(string $payloadJson): ExecutableInterface
+    public function createFromPayload(string $endpoint, string $payloadJson): ExecutableInterface
     {
         try {
             $payload = json_decode($payloadJson);
@@ -24,20 +24,20 @@ class RequestFactory implements RequestFactoryContract
                 throw new BadRequestException();
             }
 
-            return new Batch($payload, $this);
+            return new Batch($endpoint, $payload, $this);
         } elseif (is_object($payload)) {
-            return $this->createSingleRequest($payload);
+            return $this->createSingleRequest($endpoint, $payload);
         }
 
         throw new BadRequestException();
     }
 
-    public function createRequest(\stdClass $requestData): RequestInterface
+    public function createRequest(string $endpoint, \stdClass $requestData): RequestInterface
     {
-        return $this->createSingleRequest($requestData);
+        return $this->createSingleRequest($endpoint, $requestData);
     }
 
-    private function createSingleRequest(\stdClass $requestData): Request
+    private function createSingleRequest(string $endpoint, \stdClass $requestData): Request
     {
         if (($requestData->jsonrpc ?? null) !== '2.0') {
             throw new BadRequestException();
@@ -59,6 +59,6 @@ class RequestFactory implements RequestFactoryContract
             }
         }
 
-        return new Request($requestData->method, $params, isset($requestData->id) ? $requestData->id : null);
+        return new Request($endpoint, $requestData->method, $params, isset($requestData->id) ? $requestData->id : null);
     }
 }

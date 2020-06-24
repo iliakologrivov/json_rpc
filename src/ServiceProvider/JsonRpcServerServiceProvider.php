@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace IliaKologrivov\LaravelJsonRpcServer\ServiceProvider;
 
+use IliaKologrivov\LaravelJsonRpcServer\Contract\RouterInterface;
+use IliaKologrivov\LaravelJsonRpcServer\Server\RouteRegistry;
 use Illuminate\Support\ServiceProvider;
 use IliaKologrivov\LaravelJsonRpcServer\Console\RouteListCommand;
-use IliaKologrivov\LaravelJsonRpcServer\Contract\ServerInterface as JsonRpcServerContract;
+use IliaKologrivov\LaravelJsonRpcServer\Console\RouteCacheCommand;
+use IliaKologrivov\LaravelJsonRpcServer\Console\RouteClearCommand;
+use IliaKologrivov\LaravelJsonRpcServer\Contract\ServerInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Server\RequestFactory;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestFactoryInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Server\RouteDispatcher;
@@ -19,24 +23,32 @@ class JsonRpcServerServiceProvider extends ServiceProvider
 {
     public $bindings = [
         RequestFactoryInterface::class => RequestFactory::class,
-        RouteRegistryInterface::class => Router::class,
+        RouteRegistryInterface::class => RouteRegistry::class,
         RouteDispatcherInterface::class => RouteDispatcher::class,
+        RouterInterface::class => Router::class,
     ];
 
     public $singletons = [
-        JsonRpcServerContract::class => Server::class,
+        ServerInterface::class => Server::class,
     ];
+
+    protected $namespace;
 
     public function boot()
     {
+        $this->publishes([
+            __DIR__ . '/../../Providers/JsonRpcRouteServiceProvider.php' => app_path('/Providers/JsonRpcRouteServiceProvider2.php'),
+        ], 'json-rpc-server');
+
         $this->commands([
+            RouteCacheCommand::class,
+            RouteClearCommand::class,
             RouteListCommand::class,
         ]);
     }
 
     public function register()
     {
-
+        $this->app->alias(ServerInterface::class, 'json-rpc-server');
     }
-
 }

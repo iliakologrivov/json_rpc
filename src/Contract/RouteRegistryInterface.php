@@ -6,17 +6,12 @@ namespace IliaKologrivov\LaravelJsonRpcServer\Contract;
 
 interface RouteRegistryInterface
 {
-    /**
-     * @param array $attributes
-     * @param callable|string $callback
-     * @return RouteRegistryInterface
-     */
-    public function group(array $attributes, $callback): RouteRegistryInterface;
+    public function group($callback): RouterInterface;
 
-    /**
-     * @param string $method
-     * @return RouteInterface
-     */
-    public function resolve(string $method): RouteInterface;
+    public function namespace(string $namespace): RouteRegistryInterface;
+
+    public function middleware($middleware): RouteRegistryInterface;
+
+    public function attribute(string $key, $value): RouteRegistryInterface;
 
 }

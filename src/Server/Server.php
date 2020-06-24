@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace IliaKologrivov\LaravelJsonRpcServer\Server;
 
+use IliaKologrivov\LaravelJsonRpcServer\Contract\RouterInterface;
 use Illuminate\Http\JsonResponse;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteDispatcherInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestExecutorInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestFactoryInterface;
-use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteRegistryInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\ServerInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Exception\Handler;
 
@@ -21,7 +21,7 @@ class Server implements ServerInterface, RequestExecutorInterface
     private $requestFactory;
 
     /**
-     * @var RouteRegistryInterface
+     * @var RouterInterface
      */
     private $router;
 
@@ -37,7 +37,7 @@ class Server implements ServerInterface, RequestExecutorInterface
 
     public function __construct(
         RequestFactoryInterface $requestFactory,
-        RouteRegistryInterface $router,
+        RouterInterface $router,
         RouteDispatcherInterface $routeDispatcher,
         Handler $exceptionHandler
     ) {
@@ -47,21 +47,19 @@ class Server implements ServerInterface, RequestExecutorInterface
         $this->exceptionHandler = $exceptionHandler;
     }
 
-    public function router(): RouteRegistryInterface
+    public function router(): RouterInterface
     {
         return $this->router;
     }
 
     public function run(string $endpoint, string $payload = null): JsonResponse
     {
-        $this->router->setEndpoint($endpoint);
-
         try {
             /**
              * @var Batch $batch
              * @var array|null $response
              */
-            $batch = $this->requestFactory->createFromPayload($payload);
+            $batch = $this->requestFactory->createFromPayload($endpoint, $payload);
             $response = $batch->executeWith($this);
         } catch (\Throwable $exception) {
             $response = $this->handleException($exception, null);
@@ -73,7 +71,7 @@ class Server implements ServerInterface, RequestExecutorInterface
     public function execute(RequestInterface $request): ?Response
     {
         try {
-            $route = $this->router->resolve($request->getMethod());
+            $route = $this->router->resolve($request->getEndpoint(), $request->getMethod());
 
             $result = $this->routeDispatcher->dispatch($route, $request);
 

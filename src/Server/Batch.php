@@ -12,24 +12,19 @@ use IliaKologrivov\LaravelJsonRpcServer\Exception\BadRequestException;
 
 final class Batch implements ExecutableInterface, Arrayable
 {
+    private $endpoint;
 
     private $batch;
+
     private $requestFactory;
 
-    /**
-     * @param array $batch
-     * @param RequestFactoryInterface $requestFactory
-     */
-    public function __construct(array $batch, RequestFactoryInterface $requestFactory)
+    public function __construct(string $endpoint, array $batch, RequestFactoryInterface $requestFactory)
     {
+        $this->endpoint = $endpoint;
         $this->batch = $batch;
         $this->requestFactory = $requestFactory;
     }
 
-    /**
-     * @param RequestExecutorInterface $executor
-     * @return array|null
-     */
     public function executeWith(RequestExecutorInterface $executor)
     {
         /**
@@ -40,7 +35,7 @@ final class Batch implements ExecutableInterface, Arrayable
                 throw new BadRequestException();
             }
 
-            return $this->requestFactory->createRequest($requestData);
+            return $this->requestFactory->createRequest($this->endpoint, $requestData);
         }, $this->batch);
 
         $responses = [];
@@ -56,11 +51,6 @@ final class Batch implements ExecutableInterface, Arrayable
         return $responses;
     }
 
-    /**
-     * Get the instance as an array.
-     *
-     * @return array
-     */
     public function toArray()
     {
         return $this->batch;

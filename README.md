@@ -1,39 +1,9 @@
-Добавить HandlerException в AppServiceProvider где App\Exceptions\JsonRpcHandler ваш путь до HandlerException
-```php
-$this->app->singleton(IliaKologrivov\LaravelJsonRpcServer\Exception\Handler::class, App\Exceptions\JsonRpcHandler::class);
-```
-Добавить пустой App\Exceptions\JsonRpcHandler
-```php
-namespace App\Exceptions;
+install
+./artisan vendor:publish --provider="IliaKologrivov\LaravelJsonRpcServer\ServiceProvider\JsonRpcServerServiceProvider"
 
-use IliaKologrivov\LaravelJsonRpcServer\Exception\Handler;
-use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestInterface;
-use IliaKologrivov\LaravelJsonRpcServer\Server\Response;
-
-class JsonRpcHandler extends Handler
-{
-    protected $dontReport = [
-
-    ];
-
-    public function report(\Throwable $exception): void
-    {
-        parent::report($exception);
-    }
-
-    public function render(\Throwable $exception, ?RequestInterface $request = null): Response
-    {
-       return parent::render($exception, $request);
-    }
-}
-```
-
-Добавить роуты в App\Providers\RouteServiceProvider где json_rpc.php название файла с роутами для json-rpc сервера
-```php
-\IliaKologrivov\LaravelJsonRpcServer\Facades\JsonRpcRoute::group(['namespace' => $this->namespace], base_path('routes/json_rpc.php'));
-```
-
-Обьявление роутов происходит через фасад JsonRpcRoute в любом месте или через фасад и $route в файле роутов json-rpc
+Добавить загрузку опубликованного провайдера App\Providers\JsonRpcRouteServiceProvider в config/app.php. 
+Настроить роуты в App\Providers\JsonRpcRouteServiceProvider где json_rpc.php название файла с роутами для json-rpc сервера.
+Обьявление роутов происходит через фасад JsonRpcRoute в любом месте или через фасад и $route в файле роутов json-rpc.
 ```php
 /**
  * @var IliaKologrivov\LaravelJsonRpcServer\Server\Router $router

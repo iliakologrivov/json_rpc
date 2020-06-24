@@ -8,15 +8,17 @@ interface RequestFactoryInterface
 {
 
     /**
+     * @param string $endpoint
      * @param string $payloadJson
      * @return ExecutableInterface
      */
-    public function createFromPayload(string $payloadJson): ExecutableInterface;
+    public function createFromPayload(string $endpoint, string $payloadJson): ExecutableInterface;
 
     /**
+     * @param string $endpoint
      * @param \stdClass $requestData
      * @return RequestInterface
      */
-    public function createRequest(\stdClass $requestData): RequestInterface;
+    public function createRequest(string $endpoint, \stdClass $requestData): RequestInterface;
 
 }

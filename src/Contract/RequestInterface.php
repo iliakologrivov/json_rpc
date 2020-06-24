@@ -8,15 +8,10 @@ use IliaKologrivov\LaravelJsonRpcServer\Server\RequestParams;
 
 interface RequestInterface
 {
+    public function getEndpoint(): string;
 
-    /**
-     * @return string
-     */
     public function getMethod(): string;
 
-    /**
-     * @return RequestParams
-     */
     public function getParams(): RequestParams;
 
     /**
@@ -24,9 +19,6 @@ interface RequestInterface
      */
     public function getId();
 
-    /**
-     * @return bool
-     */
     public function hasId(): bool;
 
     public function all(): ?array;

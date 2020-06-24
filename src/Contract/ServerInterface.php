@@ -10,9 +10,9 @@ interface ServerInterface
 {
 
     /**
-     * @return RouteRegistryInterface
+     * @return RouterInterface
      */
-    public function router(): RouteRegistryInterface;
+    public function router(): RouterInterface;
 
     /**
      * @param string $endpoint
