@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IliaKologrivov\LaravelJsonRpcServer\Console;
 
+use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteCacheInterface;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 
@@ -13,26 +14,18 @@ class RouteClearCommand extends Command
 
     protected $description = 'Remove the route cache file';
 
-    /**
-     * @var \Illuminate\Filesystem\Filesystem
-     */
-    protected $files;
-
-    public function __construct(Filesystem $files)
+    public function __construct()
     {
         parent::__construct();
-
-        $this->files = $files;
     }
 
     /**
+     * @param  RouteCacheInterface  $cache
      * @return void
      */
-    public function handle()
+    public function handle(RouteCacheInterface $cache)
     {
-        $filePath = $this->getLaravel()->bootstrapPath(env('JSON_RPC__ROUTES_CACHE', 'cache/json_rpc_routes.php'));
-
-        $this->files->delete($filePath);
+        $cache->clear();
 
         $this->info('Route cache cleared!');
     }

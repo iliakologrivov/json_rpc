@@ -1,5 +1,0 @@
-<?php
-
-app('json-rpc-server')->router()->setRoutes(
-    unserialize(base64_decode('{{routes}}'))
-);

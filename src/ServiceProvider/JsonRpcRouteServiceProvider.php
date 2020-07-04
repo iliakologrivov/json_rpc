@@ -4,26 +4,29 @@ declare(strict_types=1);
 
 namespace IliaKologrivov\LaravelJsonRpcServer\ServiceProvider;
 
+use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteCacheInterface;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Contracts\Routing\ResponseFactory;
 
 class JsonRpcRouteServiceProvider extends ServiceProvider
 {
     protected $namespace;
 
-    public function boot()
+    /**
+     * Bootstrap any application services.
+     *
+     * @param RouteCacheInterface $cache
+     * @return void
+     */
+    public function boot(RouteCacheInterface $cache)
     {
-        if ($this->routesAreCached()) {
-            $this->loadCachedRoutes();
+        if ($cache->has()) {
+            $this->app->booted(function () use ($cache) {
+                $this->app['json-rpc-server']->router()->setRoutes($cache->get());
+            });
         } else {
             $this->loadRoutes();
         }
-    }
-
-    protected function loadCachedRoutes()
-    {
-        $this->app->booted(function () {
-            require $this->getCachedRoutesPath();
-        });
     }
 
     protected function loadRoutes()
@@ -31,15 +34,5 @@ class JsonRpcRouteServiceProvider extends ServiceProvider
         if (method_exists($this, 'map')) {
             $this->app->call([$this, 'map']);
         }
-    }
-
-    protected function getCachedRoutesPath(): string
-    {
-        return $this->app->bootstrapPath(env('JSON_RPC__ROUTES_CACHE', 'cache/json_rpc_routes.php'));
-    }
-
-    protected function routesAreCached(): bool
-    {
-        return $this->app['files']->exists($this->getCachedRoutesPath());
     }
 }
