@@ -1,9 +1,14 @@
-install
+## Installation
+
+```bash
+composer require iliakologrivov/laravel-json-rpc-server
 ./artisan vendor:publish --provider="IliaKologrivov\LaravelJsonRpcServer\ServiceProvider\JsonRpcServerServiceProvider"
+```
 
 Добавить загрузку опубликованного провайдера App\Providers\JsonRpcRouteServiceProvider в config/app.php. 
 Настроить роуты в App\Providers\JsonRpcRouteServiceProvider где json_rpc.php название файла с роутами для json-rpc сервера.
 Обьявление роутов происходит через фасад JsonRpcRoute в любом месте или через фасад и $route в файле роутов json-rpc.
+
 ```php
 /**
  * @var IliaKologrivov\LaravelJsonRpcServer\Server\Router $router
