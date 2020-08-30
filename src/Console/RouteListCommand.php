@@ -45,16 +45,26 @@ class RouteListCommand extends Command
             'Endpoint',
             'Method',
             'Controller',
+            'Middleware',
         ];
         $data = [];
 
         foreach($server->router()->getRoutes() as $endpoint => $routes) {
-            foreach($routes as $method => $controller) {
-                $data[] = [
+            foreach($routes as $method => $route) {
+                $row = [
                     'endpoint' => $endpoint,
                     'method' => $method,
-                    'controller' => $controller[0] . '@' . $controller[1],
+                    'controller' => null,
+                    'middleware' => '[' . implode(', ', $route[2]) . ']',
                 ];
+
+                if ($route[1] instanceof \Closure) {
+                    $row['controller'] = 'Closure';
+                } else {
+                    $row['controller'] = $route[0] . '@' . $route[1];
+                }
+
+                $data[] = $row;
             }
         }
 

@@ -94,7 +94,7 @@ class Request implements RequestContract, ExecutableInterface
 
     public function all(): ?array
     {
-        return $this->getParams()->getParams();
+        return $this->getParams()->all();
     }
 
     /**

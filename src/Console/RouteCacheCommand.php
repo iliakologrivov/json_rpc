@@ -26,22 +26,36 @@ class RouteCacheCommand extends Command
 
     public function handle(RouteCacheInterface $cache)
     {
-        $this->call('json-rpc-route:clear');
+        try {
+            $this->call('json-rpc-route:clear');
 
-        $routes = $this->getFreshApplicationRoutes();
+            $routes = $this->getFreshApplicationRoutes();
 
-        if ($routes === []) {
-            return $this->error('Your application doesn\'t have any routes.');
+            foreach ($routes as $endpoint => $methods) {
+                foreach ($methods as $method => $route) {
+                    if ($route[1] instanceof \Closure) {
+                        throw new \Exception('Unable to prepare route ' . $endpoint . ' [' . $method . '] for serialization. Uses Closure.');
+                    }
+                }
+            }
+
+            if ($routes === []) {
+                throw new \Exception('Your application doesn\'t have any routes.');
+            }
+
+            $cache->make($routes);
+
+            $this->info('Routes cached successfully!');
+        } catch (\Exception $exception) {
+            return $this->error($exception->getMessage());
         }
-
-        $cache->make($routes);
-
-        $this->info('Routes cached successfully!');
     }
 
     protected function getFreshApplicationRoutes(): array
     {
-        return $this->getFreshApplication()['json-rpc-server']->router()->getRoutes();
+        return $this->getFreshApplication()['json-rpc-server']
+            ->router()
+            ->getRoutes();
     }
 
     /**

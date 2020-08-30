@@ -33,11 +33,23 @@ final class RequestParams
     }
 
     /**
-     * @return array
+     * Returns the parameters.
+     *
+     * @return array An array of parameters
      */
-    public function getParams(): array
+    public function all(): array
     {
         return $this->params;
+    }
+
+    /**
+     * Replaces the current parameters by a new set.
+     *
+     * @param  array  $params
+     */
+    public function replace(array $params = [])
+    {
+        $this->params = $params;
     }
 
     /**

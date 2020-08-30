@@ -8,32 +8,47 @@ use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteInterface;
 
 final class Route implements RouteInterface
 {
-    private $controllerClass;
+    private $controller;
 
-    private $actionName;
+    private $action;
+
+    private $middleware = [];
 
     /**
-     * @param string $controllerClass
-     * @param string $actionName
+     * @param  string|null  $controller
+     * @param  string|callable  $action
+     * @param  string[]  $middleware
      */
-    public function __construct(string $controllerClass, string $actionName) {
-        $this->controllerClass = $controllerClass;
-        $this->actionName = $actionName;
+    public function __construct(?string $controller, $action, array $middleware = [])
+    {
+        $this->controller = $controller;
+        $this->action = $action;
+        $this->middleware = $middleware;
+    }
+
+    public function getController(): ?string
+    {
+        return $this->controller;
     }
 
     /**
-     * @return string
+     * @return string|callable
      */
-    public function getControllerClass(): string
+    public function getAction()
     {
-        return $this->controllerClass;
+        return $this->action;
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getActionName(): string
+    public function getMiddleware(): array
     {
-        return $this->actionName;
+        return $this->middleware;
+    }
+
+    public function isControllerAction(): bool
+    {
+        return $this->controller !== null && is_string($this->action);
     }
 }

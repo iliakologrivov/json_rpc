@@ -7,10 +7,14 @@ namespace IliaKologrivov\LaravelJsonRpcServer\Server;
 use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Pipeline\Pipeline;
+use Illuminate\Support\Str;
 use ReflectionClass;
-use \ReflectionException;
 use ReflectionMethod;
 use ReflectionParameter;
+use ReflectionException;
+use ReflectionFunction;
+use ReflectionFunctionAbstract;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteDispatcherInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteInterface;
@@ -48,38 +52,48 @@ final class RouteDispatcher implements RouteDispatcherInterface
      */
     public function dispatch(RouteInterface $route, RequestInterface $request)
     {
-        $controllerClass = $route->getControllerClass();
-
-        $controller = $this->container->make($controllerClass);
-
-        try {
-            $method = new ReflectionMethod($controller, $route->getActionName());
-        } catch (ReflectionException $e) {
-            throw new InternalErrorException('Method not implemented', $e->getCode(), $e);
+        if ($route->isControllerAction()) {
+            return $this->dispatchController($route->getController(), $route->getAction(), $request);
         }
 
-        return $this->executeMethod($controller, $method, $request);
+        return $this->dispatchClosure($route->getAction(), $request);
     }
 
-    /**
-     * @param  object  $controller
-     * @param  ReflectionMethod  $method
-     * @param  RequestInterface  $request
-     * @return mixed
-     * @throws BindingResolutionException
-     */
-    private function executeMethod($controller, ReflectionMethod $method, RequestInterface $request)
+    private function dispatchClosure($function, RequestInterface $request)
     {
-        $params = null;
-        $areParamsNamed = null;
-        $requestParams = $request->getParams();
+        $args = $this->resolveClassMethodDependencies((new ReflectionFunction($function)), $request);
 
-        if ($requestParams) {
-            $params = $requestParams->getParams() ?: null;
-            if ($params) {
-                $areParamsNamed = $requestParams->areParamsNamed();
-            }
+        return $function(...array_values($args));
+    }
+
+    private function dispatchController(string $controller, string $method, RequestInterface $request)
+    {
+        $controller = $this->container->make($controller);
+
+        try {
+            $action = new ReflectionMethod($controller, $method);
+        } catch (ReflectionException $exception) {
+            throw new InternalErrorException(
+                'Method not implemented',
+                $exception->getCode(),
+                $exception
+            );
         }
+
+        $args = $this->resolveClassMethodDependencies($action, $request);
+
+        if (method_exists($controller, 'callAction')) {
+            return $controller->callAction($method, $args);
+        }
+
+        return $controller->{$method}(...array_values($args));
+    }
+
+    private function resolveClassMethodDependencies(ReflectionFunctionAbstract $method, RequestInterface $request)
+    {
+        $requestParams = $request->getParams();
+        $params = $requestParams->all();
+        $areParamsNamed = $requestParams->areParamsNamed();
 
         $args = [];
 
@@ -91,14 +105,14 @@ final class RouteDispatcher implements RouteDispatcherInterface
 
             if ($class) {
                 if ($class->isSubclassOf(FormRequest::class)) {
-                    $args[] = $this->makeFormRequest($class->name, $requestParams);
+                    $args[] = $this->makeFormRequest($class->name, $request->getParams());
                 } elseif ($class->implementsInterface(RequestInterface::class)) {
                     $args[] = $request;
                 } else {
                     $args[] = $this->container->make($class->name);
                 }
             } else {
-                if (null !== $params) {
+                if (! empty($params)) {
                     if ($parameter->isVariadic()) {
                         foreach ($params as $key => $value) {
                             $args[] = $this->cast($value, $parameter);
@@ -111,26 +125,27 @@ final class RouteDispatcher implements RouteDispatcherInterface
                         $name = $parameter->getName();
                         if (array_key_exists($name, $params)) {
                             $args[] = $this->cast($params[$name], $parameter);
+
                             unset($params[$name]);
+
                             continue;
                         }
-                    } else {
-                        if (count($params)) {
-                            $args[] = $this->cast(array_shift($params), $parameter);
-                            continue;
-                        }
+                    } elseif (count($params)) {
+                        $args[] = $this->cast(array_shift($params), $parameter);
+
+                        continue;
                     }
                 }
 
                 try {
                     $args[] = $parameter->getDefaultValue();
-                } catch (ReflectionException $e) {
-                    throw new InvalidParamsException("'{$parameter->getName()}' is required", 0, $e);
+                } catch (ReflectionException $exception) {
+                    throw new InvalidParamsException("'{$parameter->getName()}' is required", 0, $exception);
                 }
             }
         }
 
-        return $method->invokeArgs($controller, $args);
+        return $args;
     }
 
     private function cast($value, ReflectionParameter $parameter)

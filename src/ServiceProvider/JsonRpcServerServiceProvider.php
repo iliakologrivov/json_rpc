@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace IliaKologrivov\LaravelJsonRpcServer\ServiceProvider;
 
+use IliaKologrivov\LaravelJsonRpcServer\Contract\MiddlewareDispatcherInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteCacheInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouterInterface;
+use IliaKologrivov\LaravelJsonRpcServer\Server\MiddlewareDispatcher;
 use IliaKologrivov\LaravelJsonRpcServer\Server\RouteFileCache;
 use IliaKologrivov\LaravelJsonRpcServer\Server\RouteRegistry;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +31,7 @@ class JsonRpcServerServiceProvider extends ServiceProvider
         RouteDispatcherInterface::class => RouteDispatcher::class,
         RouterInterface::class => Router::class,
         RouteCacheInterface::class => RouteFileCache::class,
+        MiddlewareDispatcherInterface::class => MiddlewareDispatcher::class,
     ];
 
     public $singletons = [

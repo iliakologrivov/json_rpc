@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IliaKologrivov\LaravelJsonRpcServer\Server;
 
+use IliaKologrivov\LaravelJsonRpcServer\Contract\MiddlewareDispatcherInterface;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouterInterface;
 use Illuminate\Http\JsonResponse;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RequestInterface;
@@ -31,6 +32,11 @@ class Server implements ServerInterface, RequestExecutorInterface
     private $routeDispatcher;
 
     /**
+     * @var MiddlewareDispatcherInterface
+     */
+    private $middlewareDispatcher;
+
+    /**
      * @var Handler 
      */
     private $exceptionHandler;
@@ -39,11 +45,13 @@ class Server implements ServerInterface, RequestExecutorInterface
         RequestFactoryInterface $requestFactory,
         RouterInterface $router,
         RouteDispatcherInterface $routeDispatcher,
+        MiddlewareDispatcherInterface $middlewareDispatcher,
         Handler $exceptionHandler
     ) {
         $this->requestFactory = $requestFactory;
         $this->router = $router;
         $this->routeDispatcher = $routeDispatcher;
+        $this->middlewareDispatcher = $middlewareDispatcher;
         $this->exceptionHandler = $exceptionHandler;
     }
 
@@ -73,9 +81,17 @@ class Server implements ServerInterface, RequestExecutorInterface
         try {
             $route = $this->router->resolve($request->getEndpoint(), $request->getMethod());
 
-            $result = $this->routeDispatcher->dispatch($route, $request);
+            $result = $this->middlewareDispatcher->dispatch(
+                $route->getMiddleware(),
+                $request,
+                function () use ($route, $request) {
+                    return $this->routeDispatcher->dispatch($route, $request);
+                }
+            );
 
-            //Если нет id то это означает, что ответ не интересует и от сервера ответ не нужен.
+            /**
+             * @see https://www.jsonrpc.org/specification#notification
+             */
             return $request->hasId() ? new Response($request->getId(), $result) : null;
         } catch (\Throwable $exception) {
             return $this->handleException($exception, $request);

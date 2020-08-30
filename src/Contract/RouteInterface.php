@@ -8,10 +8,20 @@ interface RouteInterface
     /**
      * @return string
      */
-    public function getControllerClass(): string;
+    public function getController(): ?string;
 
     /**
-     * @return string
+     * @return string|callable
      */
-    public function getActionName(): string;
+    public function getAction();
+
+    /**
+     * @return array
+     */
+    public function getMiddleware(): array;
+
+    /**
+     * @return bool
+     */
+    public function isControllerAction(): bool;
 }

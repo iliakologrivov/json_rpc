@@ -42,7 +42,7 @@ abstract class FormRequest
      */
     public function all(): array
     {
-        return $this->params ? $this->params->getParams() : [];
+        return $this->params ? $this->params->all() : [];
     }
 
     /**

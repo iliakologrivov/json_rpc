@@ -20,6 +20,8 @@ final class Router implements RouterInterface
 
     private $namespace = '';
 
+    private $middleware = [];
+
     /**
      * @var Registrar
      */
@@ -43,7 +45,7 @@ final class Router implements RouterInterface
             throw new \LogicException("Route for [{$method}] has no action.");
         }
 
-        $this->routes[$this->currentEndpoint][strtolower($method)] = $this->parseAction($action);
+        $this->routes[$this->currentEndpoint][strtolower($method)] = $this->parseAction($action, $this->middleware);
 
         $this->laravelRoute->post($this->currentEndpoint, [Controller::class, 'run']);
 
@@ -54,6 +56,7 @@ final class Router implements RouterInterface
     {
         $oldNamespace = $this->namespace;
         $oldEndpoint = $this->currentEndpoint;
+        $oldMiddleware = $this->middleware;
 
         if (array_key_exists('namespace', $attributes)) {
             $this->namespace = $this->prependNamespace($attributes['namespace']);
@@ -63,10 +66,13 @@ final class Router implements RouterInterface
             $this->currentEndpoint = ltrim($this->currentEndpoint . '/' . trim(mb_strtolower($attributes['endpoint']), '/'), '/');
         }
 
+        array_push($this->middleware, ...(array)($attributes['middleware'] ?? []));
+
         $this->loadRoutes($callback);
 
         $this->namespace = $oldNamespace;
         $this->currentEndpoint = $oldEndpoint;
+        $this->middleware = $oldMiddleware;
 
         return $this;
     }
@@ -76,7 +82,11 @@ final class Router implements RouterInterface
         $method = strtolower($method);
 
         if ($this->routes[$endpoint][$method] ?? false) {
-            return new Route($this->routes[$endpoint][$method][0], $this->routes[$endpoint][$method][1]);
+            return new Route(
+                $this->routes[$endpoint][$method][0],
+                $this->routes[$endpoint][$method][1],
+                (array)($this->routes[$endpoint][$method][2] ?? [])
+            );
         }
 
         throw new RouteNotFoundException($method);
@@ -105,7 +115,7 @@ final class Router implements RouterInterface
         }
     }
 
-    private function parseAction($action): array
+    private function parseAction($action , array $middleware = []): array
     {
         if (is_string($action)) {
             $action = explode('@', $action,2);
@@ -113,17 +123,27 @@ final class Router implements RouterInterface
             return [
                 $this->prependNamespace($action[0]),
                 $action[1],
+                $middleware
             ];
         } elseif (is_callable($action, true)) {
+            if (is_array($action)) {
+                return [
+                    $action[0],
+                    $action[1],
+                    $middleware
+                ];
+            }
+
             return [
-                $action[0],
-                $action[1],
+                null,
+                $action,
+                $middleware
             ];
         } elseif (!empty($action['uses'])) {
-            return $this->parseAction($action['uses']);
+            return $this->parseAction($action['uses'], array_merge($middleware, (array)($action['middleware'] ?? [])));
         }
 
-        return $action;
+        throw new \LogicException('Action is unknown format');
     }
 
     private function prependNamespace(string $class): string
