@@ -14,7 +14,7 @@ final class Router implements RouterInterface
     /**
      * @var string
      */
-    private $currentEndpoint = '';
+    private $endpoint = '';
 
     private $routes = [];
 
@@ -45,9 +45,9 @@ final class Router implements RouterInterface
             throw new \LogicException("Route for [{$method}] has no action.");
         }
 
-        $this->routes[$this->currentEndpoint][strtolower($method)] = $this->parseAction($action, $this->middleware);
+        $this->routes[$this->endpoint][strtolower($method)] = $this->parseAction($action, $this->middleware);
 
-        $this->laravelRoute->post($this->currentEndpoint, [Controller::class, 'run']);
+        $this->laravelRoute->post($this->endpoint, [Controller::class, 'run']);
 
         return $this;
     }
@@ -55,7 +55,7 @@ final class Router implements RouterInterface
     public function group(array $attributes, $callback): RouterInterface
     {
         $oldNamespace = $this->namespace;
-        $oldEndpoint = $this->currentEndpoint;
+        $oldEndpoint = $this->endpoint;
         $oldMiddleware = $this->middleware;
 
         if (array_key_exists('namespace', $attributes)) {
@@ -63,7 +63,7 @@ final class Router implements RouterInterface
         }
 
         if (array_key_exists('endpoint', $attributes)) {
-            $this->currentEndpoint = ltrim($this->currentEndpoint . '/' . trim(mb_strtolower($attributes['endpoint']), '/'), '/');
+            $this->endpoint = ltrim($this->endpoint . '/' . trim(mb_strtolower($attributes['endpoint']), '/'), '/');
         }
 
         array_push($this->middleware, ...(array)($attributes['middleware'] ?? []));
@@ -71,7 +71,7 @@ final class Router implements RouterInterface
         $this->loadRoutes($callback);
 
         $this->namespace = $oldNamespace;
-        $this->currentEndpoint = $oldEndpoint;
+        $this->endpoint = $oldEndpoint;
         $this->middleware = $oldMiddleware;
 
         return $this;
@@ -155,6 +155,6 @@ final class Router implements RouterInterface
 
     public function __call($method, $parameters)
     {
-        return (new RouteRegistry($this))->attribute($method, ...$parameters);
+        return (new RouteRegistry($this))->{$method}(...$parameters);
     }
 }

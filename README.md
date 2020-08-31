@@ -16,23 +16,46 @@ composer require iliakologrivov/laravel-json-rpc-server
 use IliaKologrivov\LaravelJsonRpcServer\Facades\JsonRpcRoute;
 use IliaKologrivov\LaravelJsonRpcServer\Server\Router;
 use App\Http\Controllers\Controller;
-JsonRpcRoute::endPoint('/api', function(Router $router) {});//установка точки для обращения по http к json-rpc, внутри callback функции есть $route с классом роутера
-JsonRpcRoute::method('foo', 'Controller@bar');//назначение метода json-rpc на метод контроллера Controller@bar
-//example using
-JsonRpcRoute::endPoint('/api', function(Router $router) {
-    JsonRpcRoute::method('foo', ['uses' => 'Controller@bar']);
-    JsonRpcRoute::method('foo', [Controller::class, 'bar']);
-    JsonRpcRoute::method('foo', ['App\Http\Controllers\Controller', 'bar']);
-    JsonRpcRoute::method('foo', ['uses' => [Controller::class, 'bar']]);
-    JsonRpcRoute::method('foo', ['uses' => ['App\Http\Controllers\Controller', 'bar']]);
-    $router->method('foo', 'Controller@bar');
-    //как и в роутере Laravel 'namespace' в методе group переназначает namespace полность, endpoint при этом конкатенирует запись
-    JsonRpcRoute::group(['namespace' => '\\v2', 'endpoint' => 'v2'], function() {
-        //endpoint - http://example.com/api/v2, controller - \v2\ControllerV2@bar 
-        JsonRpcRoute::method('foo', ['uses' => 'ControllerV2@bar']);
+JsonRpcRoute::method('foo', 'Controller@bar');
+
+JsonRpcRoute::endPoint('/users', function(Router $router) {
+    JsonRpcRoute::method('create', ['uses' => 'UserController@create']);
+
+    JsonRpcRoute::group(['endpoint' => '/v1', 'middleware' => [TestMiddleware::class]], function() {
+        JsonRpcRoute::method('show', ['uses' => 'UserController@show', 'middleware' => [TestMethodMiddleware::class]]);
     });
 
+    JsonRpcRoute::group(['endpoint' => '/v2', 'namespace' => '\\App\\JsonRpcV2\\Controllers'], function(Router $router) {
+        $router->method('insert', ['uses' => 'UserController@insert']);
+
+        JsonRpcRoute::group(['endpoint' => '/level2'], function(Router $router) {
+            $router->method('update', ['uses' => 'UserController@update']);
+        });
+    });
+
+    JsonRpcRoute::method('update', [Controller::class, 'update']);
+
+    JsonRpcRoute::method('delete', function(Request $request) {
+        return [
+            'success' => true,
+        ];
+    });
 });
+```
+
+```bash
+./artisan json-rpc-route:list
++--------------------------+--------+-------------------------------------------------+----------------------------------------+
+| Endpoint                 | Method | Controller                                      | Middleware                             |
++--------------------------+--------+-------------------------------------------------+----------------------------------------+
+| json_rpc                 | foo    | App\Http\Controllers\Controller@bar             | []                                     |
+| json_rpc/users           | create | App\Http\Controllers\UserController@create      | []                                     |
+| json_rpc/users           | update | App\Http\Controllers\Controller@update          | []                                     |
+| json_rpc/users           | delete | Closure                                         | []                                     |
+| json_rpc/users/v1        | show   | App\Http\Controllers\UserController@show        | [TestMiddleware, TestMethodMiddleware] |
+| json_rpc/users/v2        | insert | App\JsonRpcV2\Controllers\UserController@insert | []                                     |
+| json_rpc/users/v2/level2 | update | App\JsonRpcV2\Controllers\UserController@update | []                                     |
++--------------------------+--------+-------------------------------------------------+----------------------------------------+
 ```
 
 Контроллеры - все так же как и в Laravel, но 

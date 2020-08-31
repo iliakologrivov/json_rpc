@@ -10,8 +10,7 @@ interface RouteRegistryInterface
 
     public function namespace(string $namespace): RouteRegistryInterface;
 
-    public function middleware($middleware): RouteRegistryInterface;
+    public function middleware(array $middleware): RouteRegistryInterface;
 
-    public function attribute(string $key, $value): RouteRegistryInterface;
-
+    public function prefix(string $endpoint): RouteRegistryInterface;
 }

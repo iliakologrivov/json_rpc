@@ -30,16 +30,16 @@ class RouteRegistry implements RouteRegistryInterface
         return $this;
     }
 
-    public function middleware($middleware): RouteRegistryInterface
+    public function middleware(array $middleware): RouteRegistryInterface
     {
         $this->attributes['middleware'] = $middleware;
 
         return $this;
     }
 
-    public function attribute(string $key, $value): RouteRegistryInterface
+    public function prefix(string $endpoint): RouteRegistryInterface
     {
-        $this->attributes[$key] = $value;
+        $this->attributes['endpoint'] = $endpoint;
 
         return $this;
     }
