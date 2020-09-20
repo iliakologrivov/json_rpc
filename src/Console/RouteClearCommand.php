@@ -6,7 +6,6 @@ namespace IliaKologrivov\LaravelJsonRpcServer\Console;
 
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteCacheInterface;
 use Illuminate\Console\Command;
-use Illuminate\Filesystem\Filesystem;
 
 class RouteClearCommand extends Command
 {

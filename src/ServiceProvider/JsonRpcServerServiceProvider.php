@@ -43,7 +43,7 @@ class JsonRpcServerServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . '/../../Providers/JsonRpcRouteServiceProvider.php' => app_path('/Providers/JsonRpcRouteServiceProvider2.php'),
+            __DIR__ . '/../../Providers/JsonRpcRouteServiceProvider.php' => app_path('/Providers/JsonRpcRouteServiceProvider.php'),
         ], 'json-rpc-server');
 
         $this->commands([

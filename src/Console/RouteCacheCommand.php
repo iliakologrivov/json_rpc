@@ -7,8 +7,6 @@ namespace IliaKologrivov\LaravelJsonRpcServer\Console;
 use IliaKologrivov\LaravelJsonRpcServer\Contract\RouteCacheInterface;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Routing\RouteCollection;
 
 class RouteCacheCommand extends Command
 {
@@ -47,7 +45,7 @@ class RouteCacheCommand extends Command
 
             $this->info('Routes cached successfully!');
         } catch (\Exception $exception) {
-            return $this->error($exception->getMessage());
+            $this->error($exception->getMessage());
         }
     }
 
